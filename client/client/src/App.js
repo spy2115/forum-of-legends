@@ -1,5 +1,9 @@
 import React, { useEffect, useState } from 'react';
 import axios from 'axios';
+import Button from './components/Button';
+import ListElement from './components/list/ListElement';
+import ListHeader from './components/list/ListHeader';
+import Header from './components/Header';
 
 function App() {
   const [data, setData] = useState('');
@@ -11,12 +15,30 @@ function App() {
   }, []);
 
   return (
-    <div className="p-6 bg-gray-100 min-h-screen">
-      <h1 className="text-3xl font-bold text-blue-600">React Frontend</h1>
-      <p>Data from Flask: {data}</p>
-      <button className="mt-4 px-4 py-2 bg-green-500 text-white rounded hover:bg-green-600">
-        Click Me
-      </button>
+    <div className="px-6 bg-slate-900 min-h-screen">
+      <Header />
+      <div className="mt-4 grid place-items-center">
+        <p className="text-white">Data from Flask: {data}</p>
+        <div className="my-6 relative h-24 w-80">
+          <img
+              alt=""
+              src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/League_of_Legends_2019_vector.svg/1200px-League_of_Legends_2019_vector.svg.png"
+              className="absolute object-cover"
+            />
+        </div>
+        <div className="my-8 grid grid-cols-2 gap-4">
+          <Button label="Najnowsze wątki" />
+          <Button label="Kategorie" />
+          <Button label="Utwórz wątek" />
+          <Button label="Obserwowane" />
+        </div>
+        <div className="my-8 grid grid-cols-12 gap-2">
+          <ListHeader />
+          <ListElement date="2 dni temu" topic="Jak grać Dariusem - poradnik od eksperta" author="spy2115" comments="4"/>
+          <ListElement date="6 dni temu" topic="temat asd asdasdasdasd asdasdasd" author="BugisMax2115" comments="13"/>
+          <ListElement date="14 dni temu" topic="Tryndamere to cwel" author="SodaDrink" comments="999"/>
+        </div>
+      </div>
     </div>
   );
 }
