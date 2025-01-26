@@ -3,7 +3,7 @@ import Button from "./Button";
 
 export default function Header() {
     return (
-        <div className="mx-auto max-w-screen-auto px-8">
+        <div className="mx-auto max-w-screen-auto px-8 bg-slate-900 shadow-lg shadow-slate-900 rounded-xl">
             <div className="flex h-16 items-center justify-between">
                 <div className="flex-1">
                     <a

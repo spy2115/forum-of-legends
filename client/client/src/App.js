@@ -8,16 +8,20 @@ function App() {
   
 
   return (
-    <div className="px-6 bg-slate-900 min-h-screen">
-      <Header />
-      <BrowserRouter>
-        <Routes>
-          <Route index element={<Home />} />
-          <Route path="/home" element={<Home />} />
-          <Route path="/thread/:threadId" element={<Thread />} />
-          
-        </Routes>
-      </BrowserRouter>
+    <div className="relative min-h-screen overflow-hidden">
+      <div 
+        className="absolute inset-0 bg-[url('../public/background.svg')] bg-center bg-repeat blur-[4px] z-0 scale-105"
+      />
+      <div className="relative px-6 z-10">
+        <Header />
+        <BrowserRouter>
+          <Routes>
+            <Route index element={<Home />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/thread/:threadId" element={<Thread />} />
+          </Routes>
+        </BrowserRouter>
+      </div>
     </div>
   );
 }
