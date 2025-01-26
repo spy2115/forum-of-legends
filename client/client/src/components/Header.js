@@ -1,5 +1,6 @@
 import Button from "./Button";
 
+
 export default function Header() {
     return (
         <div className="mx-auto max-w-screen-auto px-8">
@@ -17,7 +18,6 @@ export default function Header() {
                     <Button label="Zaloguj się"/>
                     <Button label="Utwórz konto"/>
                 </div>
-                
             </div>
         </div>
     )
