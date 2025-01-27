@@ -15,8 +15,8 @@ export default function Header() {
                 </div>
                 
                 <div className="grid grid-cols-2 gap-2">
-                    <Button label="Zaloguj się"/>
-                    <Button label="Utwórz konto"/>
+                    <Button label="Zaloguj się" address="/login"/>
+                    <Button label="Utwórz konto" address="/register"/>
                 </div>
             </div>
         </div>

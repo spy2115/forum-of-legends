@@ -7,16 +7,42 @@ import ListHeader from "../components/list/ListHeader"
 
 export default function Home() {
     const [data, setData] = useState('');
+    const [threadsData, setThreadsData] = useState("");
 
     useEffect(() => {
-        axios.get('/api/data')
-        .then(response => setData(response.data.message))
+        axios.get('/api/users', {
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+          },
+        })
+        .then(response => {
+          setData(response.data);
+        })
         .catch(error => console.error(error));
-    }, []);
+      }, []);
+
+      useEffect(() => {
+        axios.get('/api/threads', {
+          headers: {
+            'ngrok-skip-browser-warning': 'true',
+          },
+        })
+        .then(response => {
+          setThreadsData(response.data);
+        })
+        .catch(error => console.error(error));
+      }, []);
 
     return (
         <div className="mt-4 grid place-items-center">
-            <p className="text-white">Data from Flask: {data}</p>
+            <h2 className="text-xl font-bold mb-4 text-white">Użytkownicy z bazy danych:</h2>
+            <ul>
+                {Array.isArray(data) && data.map(user => (
+                <li key={user.id} className='text-white'>
+                    {user.name} - {user.email}
+                </li>
+                ))}
+            </ul>
             <div className="my-8 grid grid-cols-4 gap-24">
                 <div className="col-span-2 my-8 relative w-64">
                 <img
@@ -28,16 +54,16 @@ export default function Home() {
                 <div className="col-span-2 my-8 grid grid-cols-2 gap-4">
                 <Button label="Najnowsze wątki" />
                 <Button label="Kategorie" />
-                <Button label="Utwórz wątek" />
+                <Button label="Utwórz wątek" address="new_thread" />
                 <Button label="Obserwowane" />
                 </div>
             </div>
             
             <div className="my-8 grid grid-cols-12 gap-2">
                 <ListHeader />
-                <ListElement date="2 dni temu" topic="Jak grać Dariusem - poradnik od eksperta" author="spy2115" comments="4" threadId="darius"/>
-                <ListElement date="6 dni temu" topic="temat asd asdasdasdasd asdasdasd" author="BugisMax2115" comments="13" threadId="Vinicius Juniuor is a Monkey!"/>
-                <ListElement date="14 dni temu" topic="Tryndamere to cwel" author="SodaDrink" comments="999" threadId="Cwel"/>
+                {Array.isArray(threadsData) && threadsData.map(thread => (
+                    <ListElement key={thread.id} date={thread.date_of_creation} topic={thread.title} author={thread.author.name} comments={thread.comments_count} threadId={thread.id} />
+                ))}
             </div>
         </div>
     )
