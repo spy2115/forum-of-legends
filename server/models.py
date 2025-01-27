@@ -9,7 +9,6 @@ SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=engine)
 
 Base = declarative_base()
 
-# Create an association table for upvoters
 upvoter_association = Table(
     'upvoter_association',
     Base.metadata,
@@ -17,7 +16,6 @@ upvoter_association = Table(
     Column('comment_id', Integer, ForeignKey('comments.id'), primary_key=True)
 )
 
-# Create an association table for downvoters
 downvoter_association = Table(
     'downvoter_association',
     Base.metadata,
@@ -25,15 +23,28 @@ downvoter_association = Table(
     Column('comment_id', Integer, ForeignKey('comments.id'), primary_key=True)
 )
 
+user_thread_follow_association = Table(
+    'user_thread_follow',
+    Base.metadata,
+    Column('user_id', Integer, ForeignKey('users.id'), primary_key=True),
+    Column('thread_id', Integer, ForeignKey('threads.id'), primary_key=True)
+)
+
 class User(Base):
     __tablename__ = "users"
     id = Column(Integer, primary_key=True, index=True)
     name = Column(String(50), unique=True, nullable=False)
     email = Column(String(100), unique=True, nullable=False)
+    password = Column(String(255), nullable=False)
 
-    # Relationships for upvoted and downvoted comments
     upvoted_comments = relationship('Comment', secondary=upvoter_association, back_populates="upvoters")
     downvoted_comments = relationship('Comment', secondary=downvoter_association, back_populates="downvoters")
+
+    followed_threads = relationship(
+        'Thread',
+        secondary=user_thread_follow_association,
+        back_populates='followers'
+    )
 
 class Category(Base):
     __tablename__ = "categories"
@@ -56,6 +67,12 @@ class Thread(Base):
     comments = relationship("Comment", back_populates="thread")
     category = relationship("Category", back_populates="threads")
 
+    followers = relationship(
+        'User',
+        secondary=user_thread_follow_association,
+        back_populates='followed_threads'
+    )
+
 class Comment(Base):
     __tablename__ = "comments"
     id = Column(Integer, primary_key=True, index=True)
@@ -66,11 +83,9 @@ class Comment(Base):
     upvotes = Column(Integer, default=0)
     downvotes = Column(Integer, default=0)
 
-    # Relationships for upvoters and downvoters
     upvoters = relationship("User", secondary=upvoter_association, back_populates="upvoted_comments")
     downvoters = relationship("User", secondary=downvoter_association, back_populates="downvoted_comments")
 
-    # Relationships to User and Thread models
     author = relationship("User", back_populates="comments")
     thread = relationship("Thread", back_populates="comments")
 

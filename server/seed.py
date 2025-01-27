@@ -22,13 +22,12 @@ db.add(category7)
 db.commit()
 
 # Tworzenie przykładowych użytkowników
-user1 = User(name="spy2115", email="spy@2115.com")
-user2 = User(name="Bugisymax", email="bugis@.com")
-user3 = User(name="Xardas25", email="Xardas25@example.com")
-user4 = User(name="teeziomek", email="teeziomek@.com")
-user5 = User(name="Venom", email="Venom@.com")
-user6 = User(name="SodaDrink", email="SodaDrink@.com")
-
+user1 = User(name="spy2115", email="spy@2115.com", password="password123")
+user2 = User(name="Bugisymax", email="bugis@.com", password="password123")
+user3 = User(name="Xardas25", email="Xardas25@example.com", password="password123")
+user4 = User(name="teeziomek", email="teeziomek@.com", password="password123")
+user5 = User(name="Venom", email="Venom@.com", password="password123")
+user6 = User(name="SodaDrink", email="SodaDrink@.com", password="password123")
 # Dodanie użytkowników do bazy
 db.add(user1)
 db.add(user2)

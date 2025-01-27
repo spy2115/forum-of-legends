@@ -6,11 +6,42 @@ from sqlalchemy.orm import joinedload
 app = Flask(__name__)
 CORS(app)
 
-@app.route('/api/data')
-def get_data():
-    return jsonify({"message": "Hello from Flask!"})
+@app.route('/api/login', methods=['POST'])
+def login():
+    db = SessionLocal()
+    try:
+        data = request.get_json()
+        email = data.get("email")
+        password = data.get("password")
 
-@app.route('/api/category', methods=['GET'])
+        if not email or not password:
+            return jsonify({"error": "Email and password are required"}), 400
+
+        user = db.query(User).filter(User.email == email).first()
+
+        if not user:
+            return jsonify({"error": "Invalid email or password"}), 401
+
+        if user.password != password:
+            return jsonify({"error": "Invalid email or password"}), 401
+
+        return jsonify({
+            "message": "Login successful",
+            "user": {
+                "id": user.id,
+                "name": user.name,
+                "email": user.email
+            }
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        db.close()
+
+
+@app.route('/api/categories', methods=['GET'])
 def get_categories():
     db = SessionLocal()
     try:
@@ -32,24 +63,14 @@ def get_categories():
     finally:
         db.close()
 
-
-@app.route('/api/users', methods=['GET'])
-def get_users():
-    db = SessionLocal()
-
-    users = db.query(User).all()
-
-    db.close()
-
-    users_data = [{"id": user.id, "name": user.name, "email": user.email} for user in users]
-
-    return jsonify(users_data)
-
 @app.route('/api/threads', methods=['GET'])
 def get_threads():
     db = SessionLocal()
 
-    threads = db.query(Thread).options(joinedload(Thread.author), joinedload(Thread.category)).all()
+    threads = db.query(Thread) \
+            .options(joinedload(Thread.author), joinedload(Thread.category)) \
+            .order_by(Thread.date_of_creation.desc()) \
+            .all()
 
     db.close()
 
@@ -62,7 +83,7 @@ def get_threads():
                 "name": thread.author.name,
                 "email": thread.author.email
             },
-            "date_of_creation": thread.date_of_creation.isoformat(),
+            "date_of_creation": thread.date_of_creation,
             "is_open": thread.is_open,
             "comments_count": thread.comments_count,
             "category": thread.category.name
@@ -72,11 +93,74 @@ def get_threads():
 
     return jsonify(threads_data)
 
+@app.route('/api/<string:category_name>/threads', methods=['GET'])
+def get_threads_by_category(category_name: str):
+    db = SessionLocal()
+    try:
+        category = db.query(Category).filter(Category.name == category_name).first()
+
+        if not category:
+            return jsonify({"error": f"Category '{category_name}' not found"}), 404
+
+        threads = db.query(Thread).filter(Thread.category_id == category.id).order_by(Thread.date_of_creation.desc()).all()
+
+        threads_data = [
+            {
+                "id": thread.id,
+                "title": thread.title,
+                "author_id": thread.author_id,
+                "date_of_creation": thread.date_of_creation,
+                "comments_count": thread.comments_count,
+                "author_name": thread.author.name,
+            }
+            for thread in threads
+        ]
+
+        return jsonify({"category": category.name, "threads": threads_data}), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        db.close()
+
+@app.route('/api/<string:user_name>/followed_threads', methods=['GET'])
+def get_followed_threads(user_name: str):
+    db = SessionLocal()
+    try:
+        user = db.query(User).filter(User.name == user_name).first()
+
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        followed_threads = db.query(Thread).join(Thread.followers).filter(User.id == user.id).order_by(Thread.date_of_creation.desc()).all()
+
+        threads_data = [{
+            "id": thread.id,
+            "title": thread.title,
+            "author": thread.author.name,
+            "category": thread.category.name,
+            "followers_count": len(thread.followers),
+            "date_of_creation": thread.date_of_creation,
+            "comments_count": thread.comments_count
+        } for thread in followed_threads]
+
+        return jsonify(threads_data), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        db.close()
+
 @app.route('/api/threads/<int:thread_id>/comments', methods=['GET'])
 def get_comments_for_thread(thread_id: int):
     db = SessionLocal()
 
-    comments = db.query(Comment).options(joinedload(Comment.author), joinedload(Comment.thread)).filter(Comment.thread_id == thread_id).all()
+    comments = db.query(Comment).options(
+        joinedload(Comment.author),
+        joinedload(Comment.thread).joinedload(Thread.followers)  # Dołączamy followersów wątku
+    ).filter(Comment.thread_id == thread_id).all()
 
     db.close()
 
@@ -89,10 +173,11 @@ def get_comments_for_thread(thread_id: int):
                 "email": comment.author.email
             },
             "content": comment.content,
-            "date_of_creation": comment.date_of_creation.isoformat(),
+            "date_of_creation": comment.date_of_creation,
             "upvotes": comment.upvotes,
             "downvotes": comment.downvotes,
-            "thread_title": comment.thread.title
+            "thread_title": comment.thread.title,
+            "thread_followers": [follower.id for follower in comment.thread.followers]
         }
         for comment in comments
     ]
@@ -106,6 +191,7 @@ def create_user():
         data = request.get_json()
         name = data.get("name")
         email = data.get("email")
+        password = data.get("password")
 
         if not name or not email:
             return jsonify({"error": "Name and email are required"}), 400
@@ -113,7 +199,7 @@ def create_user():
         if db.query(User).filter(User.email == email).first():
             return jsonify({"error": "Email already exists"}), 400
 
-        new_user = User(name=name, email=email)
+        new_user = User(name=name, email=email, password=password)
         db.add(new_user)
         db.commit()
         db.refresh(new_user)
@@ -207,7 +293,7 @@ def create_comment(thread_id: int):
                 "name": author.name,
                 "email": author.email
             },
-            "date_of_creation": new_comment.date_of_creation.isoformat(),
+            "date_of_creation": new_comment.date_of_creation,
             "upvotes": new_comment.upvotes,
             "downvotes": new_comment.downvotes,
             "thread_id": thread.id,
@@ -275,6 +361,45 @@ def vote_on_comment(comment_id: int):
     finally:
         db.close()
 
+
+@app.route('/api/threads/<int:thread_id>/follow', methods=['POST'])
+def follow_thread(thread_id: int):
+    db = SessionLocal()
+    try:
+        data = request.get_json()
+        user_id = data.get("user_id")
+        action = data.get("action")
+
+        thread = db.query(Thread).filter(Thread.id == thread_id).first()
+        user = db.query(User).filter(User.id == user_id).first()
+
+        if not thread:
+            return jsonify({"error": "Thread not found"}), 404
+
+        if not user:
+            return jsonify({"error": "User not found"}), 404
+
+        if action == 1:
+            if user not in thread.followers:
+                thread.followers.append(user)
+
+        elif action == 0:
+            if user in thread.followers:
+                thread.followers.remove(user)
+
+        db.commit()
+
+        return jsonify({
+            "id": thread.id,
+            "title": thread.title,
+            "followers_count": len(thread.followers)
+        }), 200
+
+    except Exception as e:
+        return jsonify({"error": str(e)}), 500
+
+    finally:
+        db.close()
 
 if __name__ == '__main__':
     app.run(host='0.0.0.0', port=5000, debug=True)
