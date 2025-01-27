@@ -5,23 +5,33 @@ import axios from 'axios';
 import TextareaAutosize from 'react-textarea-autosize';
 import Button from "../components/Button"
 import { useEffect, useState } from "react";
+import { useNavigate } from "react-router-dom";
 
 const schema = yup.object().shape({
     title: yup.string().required("Tytuł nie może być pusty.").max(99, "Zbyt długi tytuł."),
     content: yup.string().required("Wiadomość nie może być pusta.").max(499, "Zbyt długa treść."),
-    // category: yup.string().required("Należy wybrać kategorię."),
 });
 
 export default function NewThread() {
     const [category, setCategory] = useState("-");
     const [categories, setCategories] = useState();
+    const [userId, setUserId] = useState(null);
+    const navigate = useNavigate();
+
+    useEffect(() => {
+      const storedUser = localStorage.getItem("userId");
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        setUserId(parsedUser);
+      }
+    }, []);
 
     const handleChange = (e) => {
         setCategory(e.target.value);
       };
 
     useEffect(() => {
-        axios.get('/api/category', {
+        axios.get('/api/categories', {
             headers: {
             'ngrok-skip-browser-warning': 'true',
             },
@@ -41,7 +51,7 @@ export default function NewThread() {
                 },
                 body: JSON.stringify({
                     title: data.title,
-                    author: 2,
+                    author: userId,
                     category: category
                 })
             })
@@ -60,7 +70,7 @@ export default function NewThread() {
                     },
                     body: JSON.stringify({
                         content: data.content,
-                        author: 2,
+                        author: userId,
                     })
                 })
                 if (!response.ok) {
@@ -69,10 +79,10 @@ export default function NewThread() {
                 }
                 const commentData = await response.json();
                 console.log("Comment add:", commentData);
+                navigate(`/thread/${threadData.id}`);
                 } catch (error) {
                     console.error("Error adding comment:", error.message);
             }
-
             } catch (error) {
                 console.error("Error creating thread:", error.message);
         }
@@ -89,7 +99,7 @@ export default function NewThread() {
     return(
         <form onSubmit={handleSubmit(onSubmit)}>
             <div className="place-items-center pt-8">
-                <div className="grid grid-cols my-8 w-1/2 bg-slate-900 border border-slate-400 p-6 rounded-xl">
+                <div className="grid grid-cols my-8 w-1/2 bg-slate-900 border border-slate-400 bg-opacity-70 p-6 rounded-xl">
                     <h1 className="text-white px-4 col-span-5"> Tytuł </h1>
                     <h1 className="text-white px-4 col-span-1"> Kategoria </h1>
                     <TextareaAutosize

@@ -17,9 +17,18 @@ export default function Thread() {
     const [watched, setWatched] = useState(false);
     const { threadId } = useParams();
     const [commentsData, setCommentsData] = useState("");
+    const [userId, setUserId] = useState(null);
 
-    const onVote = async (comment_id, user_id, vote) => {
-            console.log(comment_id, user_id, vote)
+    useEffect(() => {
+      const storedUser = localStorage.getItem("userId");
+      if (storedUser) {
+        const parsedUser = JSON.parse(storedUser);
+        setUserId(parsedUser);
+      }
+    }, []);
+
+    const onVote = async (comment_id, vote) => {
+        if (userId) {
             try {
                 const response = await fetch(`/api/comments/${comment_id}/vote`, {
                     method: "POST",
@@ -27,7 +36,7 @@ export default function Thread() {
                         "Content-Type": "application/json"
                     },
                     body: JSON.stringify({
-                        user_id: 3,
+                        user_id: userId,
                         vote: vote
                     })
                 })
@@ -41,6 +50,7 @@ export default function Thread() {
                     console.error("Error voting:", error.message);
             }
         }
+        }
 
     const onSubmit = async (data) => {
             try {
@@ -51,7 +61,7 @@ export default function Thread() {
                     },
                     body: JSON.stringify({
                         content: data.content,
-                        author: 1,
+                        author: userId,
                     })
                 })
                 if (!response.ok) {
@@ -81,12 +91,41 @@ export default function Thread() {
         })
         .then(response => {
           setCommentsData(response.data);
+          if (response.data[0].thread_followers.includes(userId)) {
+            setWatched(true);
+          }
         })
         .catch(error => console.error(error));
-      }, []);
+      }, [userId]);
 
-    function handleSwitchWatched() {
+    async function handleSwitchWatched() {
         setWatched(prev => !prev);
+        let actionId = -1;
+        if (watched) {
+            actionId = 0;
+        } else {
+            actionId = 1;
+        }
+        try {
+            const response = await fetch(`/api/threads/${threadId}/follow`, {
+                method: "POST",
+                headers: {
+                    "Content-Type": "application/json"
+                },
+                body: JSON.stringify({
+                    user_id: userId,
+                    action: actionId,
+                })
+            })
+            if (!response.ok) {
+                const errorData = await response.json();
+                throw new Error(errorData.error || "Unknown error occurred");
+            }
+            const watchData = await response.json();
+            console.log("Added to watched:", watchData);
+            } catch (error) {
+                console.error("Error adding comment:", error.message);
+        }
     }
 
     return (
@@ -97,23 +136,29 @@ export default function Thread() {
                     {watched ? <GoStarFill onClick={handleSwitchWatched} className='text-yellow-500 hover:text-white' size={28} /> : <GoStar onClick={handleSwitchWatched} className='text-white hover:text-yellow-500' size={28} />}
                 </div>
                 {Array.isArray(commentsData) && commentsData.map(comment => (
-                    <Comment key={comment.id} date={comment.date_of_creation} text={comment.content} author={comment.author.name} upvotes={comment.upvotes} downvotes={comment.downvotes} onUpvote={() => onVote(comment.id, comment.author.id, 1)} onDownvote={() => onVote(comment.id, comment.author.id, 0)} />
+                    <Comment key={comment.id} date={comment.date_of_creation} text={comment.content} author={comment.author.name} upvotes={comment.upvotes} downvotes={comment.downvotes} onUpvote={() => onVote(comment.id, 1)} onDownvote={() => onVote(comment.id, 0)} />
                 ))}
                 <form onSubmit={handleSubmit(onSubmit)}>
-                    <div className='grid grid-cols-9'>
-                        <div />
-                        <TextareaAutosize
-                        placeholder="Dodaj komentarz" className="col-span-8 bg-slate-600 px-4 py-2 mb-2 rounded-3xl border border-slate-400 text-white bg-opacity-70"
-                        type="text"
-                        id="Content"
-                        name="content"
-                        {...register('content')}/>
-                    </div>
-                    <div className='grid grid-cols-9'>
-                        <div className='col-span-6'/>
-                        <label className="text-right col-span-2 block text-sm font-medium text-red-500 mb-6 px-4"> {errors?.content && `${errors?.content.message}`} </label>
-                        <Button label="Opublikuj" />
-                    </div>
+                    {userId ?
+                    <>
+                        <div className='grid grid-cols-9'>
+                            <div />
+                            <TextareaAutosize
+                            placeholder="Dodaj komentarz" className="col-span-8 bg-slate-600 px-4 py-2 mb-2 rounded-3xl border border-slate-400 text-white bg-opacity-70"
+                            type="text"
+                            id="Content"
+                            name="content"
+                            {...register('content')}/>
+                        </div>
+                        <div className='grid grid-cols-9'>
+                            <div className='col-span-6'/>
+                            <label className="text-right col-span-2 block text-sm font-medium text-red-500 mb-6 px-4"> {errors?.content && `${errors?.content.message}`} </label>
+                            <Button label="Opublikuj" />
+                        </div>
+                    </>
+                    : 
+                    <h1 className='text-white col-span-10 text-right mx-4'> Zaloguj się aby dołączyć do dyskusji!  </h1>
+                    }
                 </form>
             </div>
         </div>

@@ -1,6 +1,6 @@
 {
   "name": "client",
-  "proxy": "https://bc37-83-24-176-170.ngrok-free.app",
+  "proxy": "https://7433-83-24-176-170.ngrok-free.app",
   "version": "0.1.0",
   "private": true,
   "dependencies": {

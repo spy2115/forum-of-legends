@@ -1,4 +1,5 @@
 import { useForm } from "react-hook-form";
+import { useNavigate } from 'react-router-dom';
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import Button from "../components/Button"
@@ -11,6 +12,8 @@ const schema = yup.object().shape({
 });
 
 export default function Register() {
+    const navigate = useNavigate();
+
     const onSubmit = async (data) => {
         try {
             const response = await fetch("/api/users", {
@@ -30,6 +33,32 @@ export default function Register() {
             }
             const userData = await response.json();
             console.log("User created:", userData);
+
+            try {
+                const response = await fetch("/api/login", {
+                    method: "POST",
+                    headers: {
+                        "Content-Type": "application/json"
+                    },
+                    body: JSON.stringify({
+                        email: data.email,
+                        password: data.password
+                    })
+                })
+                if (!response.ok) {
+                    const errorData = await response.json();
+                    throw new Error(errorData.error || "Unknown error occurred");
+                }
+                const userData = await response.json();
+                console.log("Logged in successfully:", userData);
+                localStorage.setItem("userName", JSON.stringify(userData.user.name));
+                localStorage.setItem("userId", JSON.stringify(userData.user.id));
+                navigate("/");
+                
+                } catch (error) {
+                    console.error("Error creating user:", error.message);
+            }
+
             } catch (error) {
                 console.error("Error creating user:", error.message);
         }}
@@ -45,7 +74,7 @@ export default function Register() {
     return (
         <form onSubmit={handleSubmit(onSubmit)}>
             <div className="place-items-center pt-8">
-                <div className="grid grid-cols my-8 w-1/4 bg-slate-900 border border-slate-400 p-6 rounded-xl">
+                <div className="grid grid-cols my-8 w-1/4 bg-slate-900 bg-opacity-70 border border-slate-400 p-6 rounded-xl">
                     <h1 className="text-white px-4"> Nazwa użytkownika</h1>
                     <input
                     type="text"
