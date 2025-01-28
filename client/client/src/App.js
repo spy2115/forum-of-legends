@@ -1,57 +1,37 @@
-import React, { useEffect, useState } from 'react';
-import axios from 'axios';
-import Button from './components/Button';
-import ListElement from './components/list/ListElement';
-import ListHeader from './components/list/ListHeader';
-import Header from './components/Header';
+import { BrowserRouter, Routes, Route } from "react-router-dom";
+import Home from './pages/Home';
+import Thread from "./pages/Thread";
+import Login from "./pages/Login";
+import Header from "./components/Header"
+import Register from "./pages/Register";
+import NewThread from "./pages/NewThread";
+import Categories from "./pages/Categories";
+import CategoryThreads from "./pages/CategoryThreads";
+import Followed from "./pages/Followed";
+
+
 
 function App() {
-  const [data, setData] = useState([]);
-
-  useEffect(() => {
-    axios.get('/api/users')
-      .then(response => {
-        setData(response.data);
-      })
-      .catch(error => console.error(error));
-  }, []);
-
   return (
-    <div className="px-6 bg-slate-900 min-h-screen">
-      <Header />
-      <div className="mt-4 grid place-items-center">
-        <div className="text-white">
-          <h2 className="text-xl font-bold mb-4">Użytkownicy z bazy danych:</h2>
-          <ul>
-            {Array.isArray(data) && data.map(user => (
-              <li key={user.id}>
-                {user.name} - {user.email}
-              </li>
-            ))}
-          </ul>
-        </div>
-        <div className="my-8 grid grid-cols-4 gap-24">
-          <div className="col-span-2 my-8 relative w-64">
-            <img
-              alt=""
-              src="https://upload.wikimedia.org/wikipedia/commons/thumb/d/d8/League_of_Legends_2019_vector.svg/1200px-League_of_Legends_2019_vector.svg.png"
-              className="absolute object-cover"
-            />
-          </div>
-          <div className="col-span-2 my-8 grid grid-cols-2 gap-4">
-            <Button label="Najnowsze wątki" />
-            <Button label="Kategorie" />
-            <Button label="Utwórz wątek" />
-            <Button label="Obserwowane" />
-          </div>
-        </div>
-
-        <div className="my-8 grid grid-cols-12 gap-2">
-          <ListHeader />
-          <ListElement date="2 dni temu" topic="Jak grać Dariusem - poradnik od eksperta" author="spy2115" comments="4" />
-          <ListElement date="6 dni temu" topic="temat asd asdasdasdasd asdasdasd" author="BugisMax2115" comments="13" />
-          <ListElement date="14 dni temu" topic="Tryndamere to cwel" author="SodaDrink" comments="999" />
-        </div>
+    <div className="relative min-h-screen overflow-hidden">
+      <div 
+        className="absolute inset-0 bg-[url('../public/background.svg')] bg-center bg-repeat blur-[4px] z-0 scale-105"
+      />
+      <div className="relative px-6 z-10">
+        <BrowserRouter>
+        <Header />
+        <Routes>
+            <Route index element={<Home />} />
+            <Route path="/home" element={<Home />} />
+            <Route path="/thread/:threadId" element={<Thread />} />
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+            <Route path="/new_thread" element={<NewThread />} />
+            <Route path="/categories" element={<Categories />} />
+            <Route path="/category/threads/:catId" element={<CategoryThreads />} />
+            <Route path="/followed" element={<Followed />} />
+          </Routes>
+        </BrowserRouter>
       </div>
     </div>
   );
