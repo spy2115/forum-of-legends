@@ -1,0 +1,60 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "mysql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                 Int       @id @default(autoincrement())
+  name               String    @unique
+  email              String    @unique
+  password           String
+  followedThreads    Thread[]  @relation("UserFollowedThreads")
+  upvotedComments    Comment[] @relation("UserUpvotedComments")
+  downvotedComments  Comment[] @relation("UserDownvotedComments")
+  authoredThreads    Thread[]  @relation("ThreadAuthor")
+  authoredComments   Comment[] @relation("CommentAuthor")
+}
+
+model Category {
+  id       Int       @id @default(autoincrement())
+  name     String    @unique
+  threads  Thread[]  @relation("CategoryThreads")
+}
+
+model Thread {
+  id              Int       @id @default(autoincrement())
+  title           String
+  author          User      @relation("ThreadAuthor", fields: [authorId], references: [id])
+  authorId        Int
+  category        Category  @relation("CategoryThreads", fields: [categoryId], references: [id])
+  categoryId      Int
+  dateOfCreation  DateTime  @default(now())
+  isOpen          Boolean   @default(true)
+  comments        Comment[]
+  followers       User[]    @relation("UserFollowedThreads")
+  commentsCount   Int       @default(0)
+}
+
+model Comment {
+  id              Int       @id @default(autoincrement())
+  author          User      @relation("CommentAuthor", fields: [authorId], references: [id])
+  authorId        Int
+  thread          Thread    @relation(fields: [threadId], references: [id])
+  threadId        Int
+  content         String
+  dateOfCreation  DateTime  @default(now())
+  upvotes         Int       @default(0)
+  downvotes       Int       @default(0)
+  upvoters        User[]    @relation("UserUpvotedComments")
+  downvoters      User[]    @relation("UserDownvotedComments")
+}
