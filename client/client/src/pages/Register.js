@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import Button from "../components/Button"
+import { useState } from "react";
 
 const schema = yup.object().shape({
     username: yup.string().required("Należy podać nazwę.").max(50, "Zbyt długa nazwa."),
@@ -12,6 +13,7 @@ const schema = yup.object().shape({
 });
 
 export default function Register() {
+    const [errorText, setErrorText] = useState("");
     const navigate = useNavigate();
 
     const onSubmit = async (data) => {
@@ -57,10 +59,11 @@ export default function Register() {
                 
                 } catch (error) {
                     console.error("Error creating user:", error.message);
-            }
-
+                }
+                
             } catch (error) {
                 console.error("Error creating user:", error.message);
+                setErrorText("Zajęta Nazwa użytkownika lub E-mail.");
         }}
     const {
 		register,
@@ -112,6 +115,7 @@ export default function Register() {
                     <label className="block text-sm font-medium text-red-500 mb-6 px-4"> {errors?.password_confirmation && `${errors?.password_confirmation.message}`} </label>
 
                     <Button label="Zarejestruj się" />
+                    <label className="block text-sm font-medium text-red-500 text-center"> {errorText && `${errorText}`} </label>
                 </div>
             </div>
         </form>

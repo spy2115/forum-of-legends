@@ -96,7 +96,7 @@ export default function Thread() {
           }
         })
         .catch(error => console.error(error));
-      }, [userId]);
+      }, [userId, onSubmit, handleSwitchWatched]);
 
     async function handleSwitchWatched() {
         setWatched(prev => !prev);

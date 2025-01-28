@@ -3,6 +3,7 @@ import { useNavigate } from 'react-router-dom';
 import { yupResolver } from "@hookform/resolvers/yup";
 import * as yup from "yup";
 import Button from "../components/Button"
+import { useState } from "react";
 
 const schema = yup.object().shape({
 	email: yup.string().email("Nieprawidłowy format adresu e-mail.").required("E-mail jest wymagany."),
@@ -10,6 +11,7 @@ const schema = yup.object().shape({
 });
 
 export default function Login() {
+    const [errorText, setErrorText] = useState("");
     const navigate = useNavigate();
 
     const onSubmit = async (data) => {
@@ -35,6 +37,7 @@ export default function Login() {
             navigate("/");
             
             } catch (error) {
+                setErrorText("Zła Nazwa użytkownika lub E-mail.");
                 console.error("Error creating user:", error.message);
         }}
 
@@ -71,6 +74,7 @@ export default function Login() {
                     <label className="block text-sm font-medium text-red-500 mb-6 px-4"> {errors?.password && `${errors?.password.message}`} </label>
                     
                     <Button label="Zaloguj się" />
+                    <label className="block text-sm font-medium text-red-500 text-center"> {errorText && `${errorText}`} </label>
                 </div>
             </div>
         </form>
